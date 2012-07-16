@@ -1,0 +1,8 @@
+# DB settings
+db_file:        'smswall.sqlite3'
+
+# App settings
+command_char:   '.'
+app_number:     1000
+min_shortcode:  1001
+max_shortcode:  9999
