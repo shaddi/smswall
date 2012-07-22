@@ -1,6 +1,12 @@
 # DB settings
 db_file:        'smswall.sqlite3'
 
+# DB schema
+t_list:         'list'
+t_membership:   'membership'
+t_owner:        'owner'
+t_confirm:      'confirm'
+
 # App settings
 command_char:   '.'
 app_number:     1000
