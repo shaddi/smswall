@@ -17,7 +17,27 @@ class List:
             return True
         return False
 
-    def create(self, initial_owner):
+    def is_owner(self, number):
+        r = self.db.execute("SELECT * FROM %s WHERE list=? AND owner=?" % self.conf.t_owner, (self.shortcode, number))
+        if r.rowcount:
+            return True
+        return False
+
+    def allows_public_posts(self):
+        """ Returns true if the list allows public posts or false otherwise. If
+        false, only owners are allowed to post. """
+        r = self.db.execute("SELECT allows_public FROM %s WHERE list=?" % self.conf.t_list, (self.shortcode,))
+        allows_public = bool(r.fetchone()[0])
+        return allows_public
+
+    def is_open(self):
+        """ Returns true if the list allows anyone to join, or false if only
+        owners can add members. """
+        r = self.db.execute("SELECT is_open FROM %s WHERE list=?" % self.conf.t_list, (self.shortcode,))
+        is_open = bool(r.fetchone()[0])
+        return is_open
+
+    def create(self, initial_owner, allows_public=True, is_open=True):
         if not self.app.is_valid_shortcode(self.shortcode):
             self.app.reply("The shortcode you selected is invalid. Please " \
                            + "choose a number between %d and %d." % \
@@ -26,8 +46,8 @@ class List:
             self.app.reply("The shortcode '%s' is already in use." % self.shortcode)
         else:
             self.conf.log.info("Creating list %s" % self.shortcode)
-            items = (self.shortcode,)
-            self.db.execute("INSERT INTO %s VALUES (?)" % self.conf.t_list, items)
+            items = (self.shortcode, allows_public, is_open)
+            self.db.execute("INSERT INTO %s VALUES (?,?,?)" % self.conf.t_list, items)
             self.make_owner(initial_owner)
 
     def delete(self, confirmed=False):
@@ -54,33 +74,54 @@ class List:
                               " (including you!) have been removed." \
                               % self.shortcode)
                 self.app.send(msg)
-            self.app.reply("The list %s has been deleted.", self.shortcode)
+            self.app.reply("The list %s has been deleted." % self.shortcode)
         else:
             self.app.add_pending_action(self.app.msg)
 
     def add_user(self, number):
         """ Add the specified user to the list """
-        self.conf.log.info("Adding user '%s' to list '%s'" % number, self.shortcode)
+        self.conf.log.info("Adding user '%s' to list '%s'" % (number, self.shortcode))
         item = (self.shortcode, number)
         db.execute("INSERT OR IGNORE INTO %s(list, member) VALUES (?,?)" % self.conf.t_membership, item)
         db.commit()
+        # TODO: only send message if insert actually touched something
         msg = Message(self.conf.app_number, number, None, "You've been added to the list '%s'." % self.shortcode)
         self.app.send(msg)
 
     def delete_user(self, number):
         """ Delete the specified user from the list """
-        self.conf.log.info("Deleting user '%s' from list '%s'" % number, self.shortcode)
+        self.conf.log.info("Deleting user '%s' from list '%s'" % (number, self.shortcode))
         db = self.db
         db.execute("DELETE FROM %s WHERE member=?" % self.conf.t_membership, (number,))
         db.execute("DELETE FROM %s WHERE list=? AND owner=?" % self.conf.t_owner, (self.shortcode, number))
         db.commit()
 
+    def enable_public_posts(self):
+        raise NotImplementedError
+
+    def disable_public_posts(self):
+        raise NotImplementedError
+
+    def make_list_open(self):
+        raise NotImplementedError
+
+    def make_list_closed(self):
+        raise NotImplementedError
 
     def make_owner(self, number):
-        raise NotImplementedError 
+        self.add_user(number)
+        self.conf.log.info("Making user '%s' owner of list '%s'" % (number, self.shortcode))
+        db = self.db
+        t_owner = self.conf.t_owner
+        db.execute("INSERT OR IGNORE INTO %s(list, owner) VALUES (?,?)" % t_owner, (self.shortcode, number))
+        db.commit()
 
     def unmake_owner(self, number):
-        raise NotImplementedError
+        self.conf.log.info("Removing user '%s' as owner of list '%s'" % (number, self.shortcode))
+        db = self.db
+        t_owner = self.conf.t_owner
+        db.execute("DELETE FROM %s WHERE list=?" % t_owner, (self.shortcode, number))
+        db.commit()
 
     def post(self, message):
         self.conf.log.info("Posting to list '%s' message: %s" % self.shortcode, message)
@@ -132,7 +173,7 @@ class SMSWall:
         # Parameter substitution doesn't work for table names, but we scrub
         # unsafe names in the accessors for the table name properties so these
         # should be fine.
-        db.execute("CREATE TABLE IF NOT EXISTS %s (shortcode TEXT)" % self.conf.t_list)
+        db.execute("CREATE TABLE IF NOT EXISTS %s (shortcode TEXT, allows_public INTEGER, is_open INTEGER)" % self.conf.t_list)
         db.execute("CREATE TABLE IF NOT EXISTS %s (list TEXT, member TEXT)" % self.conf.t_membership)
         db.execute("CREATE TABLE IF NOT EXISTS %s (list TEXT, owner TEXT)" % self.conf.t_owner)
         db.execute("CREATE TABLE IF NOT EXISTS %s (time REAL, sender TEXT, receiver TEXT, command TEXT)" % self.conf.t_confirm)
@@ -171,7 +212,6 @@ class SMSWall:
         gets re-submitted to handle_incoming with the 'confirmed' flag set to
         true. 
         """
-        # TODO: DB: select confirm_action from pending action for sender
         r = self.db.execute("SELECT sender, receiver, command FROM %s WHERE sender=?" % self.conf.t_confirm, sender)
         conf_actions = r.fetchall()
         if len(conf_actions) == 0:
@@ -188,7 +228,7 @@ class SMSWall:
         confirmation response to the sender. """
         t_confirm = self.conf.t_confirm
         items = (time.time(), message.sender, message.recipient, message.body)
-        self.db.execute("INSERT INTO %s VALUES (?)" % t_confirm, items)
+        self.db.execute("INSERT INTO %s VALUES (?,?,?,?)" % t_confirm, items)
         self.db.commit()
         self.reply("Reply to this message with the word \"confirm\" to " +
                     "confirm your previous command.")
