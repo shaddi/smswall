@@ -19,21 +19,19 @@ class List:
             return True
         return False
 
-    def allows_public_posts(self):
-        """ Returns true if the list allows public posts or false otherwise. If
-        false, only owners are allowed to post. """
-        r = self.db.execute("SELECT allows_public FROM %s WHERE list=?" % self.conf.t_list, (self.shortcode,))
-        allows_public = bool(r.fetchone()[0])
-        return allows_public
+    def only_owners_can_post(self):
+        """ Returns true if the list only allows owners to post, and false
+        otherwise. """
+        r = self.db.execute("SELECT owner_only FROM %s WHERE list=?" % self.conf.t_list, (self.shortcode,))
+        return bool(r.fetchone()[0])
 
-    def is_open(self):
+    def is_public(self):
         """ Returns true if the list allows anyone to join, or false if only
         owners can add members. """
-        r = self.db.execute("SELECT is_open FROM %s WHERE list=?" % self.conf.t_list, (self.shortcode,))
-        is_open = bool(r.fetchone()[0])
-        return is_open
+        r = self.db.execute("SELECT is_public FROM %s WHERE list=?" % self.conf.t_list, (self.shortcode,))
+        return bool(r.fetchone()[0])
 
-    def create(self, initial_owner, allows_public=True, is_open=True):
+    def create(self, initial_owner, owners_only=False, is_public=True):
         if not self.app.is_valid_shortcode(self.shortcode):
             self.app.reply("The shortcode you selected is invalid. Please " \
                            + "choose a number between %d and %d." % \
@@ -42,7 +40,7 @@ class List:
             self.app.reply("The shortcode '%s' is already in use." % self.shortcode)
         else:
             self.conf.log.info("Creating list %s" % self.shortcode)
-            items = (self.shortcode, allows_public, is_open)
+            items = (self.shortcode, owners_only, is_public)
             self.db.execute("INSERT INTO %s VALUES (?,?,?)" % self.conf.t_list, items)
             self.make_owner(initial_owner)
 
@@ -92,17 +90,27 @@ class List:
         db.execute("DELETE FROM %s WHERE list=? AND owner=?" % self.conf.t_owner, (self.shortcode, number))
         db.commit()
 
-    def enable_public_posts(self):
-        raise NotImplementedError
+    def set_owner_only_posting(self, owners_only):
+        """ Set whether or not the list allows non-owners to post. If true,
+        then only list owners may post. If false, any member of the list may
+        post. Non-members may never post.
+        """
+        self.conf.log.info("List '%s': Setting owner_only to '%s'" % (self.shortcode, bool(owners_only)))
+        db = self.db
+        if not self.exists():
+            self.app.reply("The list '%s' does not exist." % self.shortcode)
+            return
+        items = (1 if owners_only else 0, self.shortcode)
+        db.execute("UPDATE OR IGNORE %s SET owner_only=? WHERE shortcode=?" % self.conf.t_list, items)
 
-    def disable_public_posts(self):
-        raise NotImplementedError
-
-    def make_list_open(self):
-        raise NotImplementedError
-
-    def make_list_closed(self):
-        raise NotImplementedError
+    def set_list_public(self, is_public):
+        self.conf.log.info("List '%s': Setting is_public to '%s'" % (self.shortcode, bool(is_public)))
+        db = self.db
+        if not self.exists():
+            self.app.reply("The list '%s' does not exist." % self.shortcode)
+            return
+        items = (1 if is_public else 0, self.shortcode)
+        db.execute("UPDATE OR IGNORE %s SET is_public=? WHERE shortcode=?" % self.conf.t_list, items)
 
     def make_owner(self, number):
         self.add_user(number)

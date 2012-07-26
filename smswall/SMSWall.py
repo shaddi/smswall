@@ -25,7 +25,7 @@ class SMSWall:
         # Parameter substitution doesn't work for table names, but we scrub
         # unsafe names in the accessors for the table name properties so these
         # should be fine.
-        db.execute("CREATE TABLE IF NOT EXISTS %s (shortcode TEXT, allows_public INTEGER, is_open INTEGER)" % self.conf.t_list)
+        db.execute("CREATE TABLE IF NOT EXISTS %s (shortcode TEXT, owner_only INTEGER, is_public INTEGER)" % self.conf.t_list)
         db.execute("CREATE TABLE IF NOT EXISTS %s (list TEXT, member TEXT)" % self.conf.t_membership)
         db.execute("CREATE TABLE IF NOT EXISTS %s (list TEXT, owner TEXT)" % self.conf.t_owner)
         db.execute("CREATE TABLE IF NOT EXISTS %s (time REAL, sender TEXT, receiver TEXT, command TEXT)" % self.conf.t_confirm)
