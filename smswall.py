@@ -15,7 +15,7 @@ parser.add_argument('--subject', '-s', action='store', dest='subject', \
 parser.add_argument('--message', '-m', action='store', dest='message', \
                     help="Body of incoming message.") 
 parser.add_argument('--clean-confirm', action='store', dest='clean', \
-                    help="Remove all pending confirm actions older than" +
+                    help="Remove all pending confirm actions older than " +
                          "given age (0 removes everything).", type=int)
 parser.add_argument('--config', '-c', action='store', dest='config', \
                     help="Configuration file (default: /etc/smswall.yaml)", \
