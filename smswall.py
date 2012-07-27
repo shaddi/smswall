@@ -31,6 +31,10 @@ conf_file = open(args.config, "r")
 config_dict = yaml.load("".join(conf_file.readlines()))
 
 log = logging.getLogger('smswall')
+
+# XXX Remove when done with development!
+args.debug_mode = True
+
 if args.debug_mode:
     logging.basicConfig(filename=args.logfile, level=logging.DEBUG)
 else:
