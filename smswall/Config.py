@@ -39,6 +39,10 @@ class Config:
         return self._scrub(self.config_dict['t_confirm'])
 
     @property
+    def sender_type(self):
+        return self.config_dict['sender_type']
+
+    @property
     def db_file(self):
         return self.config_dict['db_file']
 

@@ -2,14 +2,26 @@ import logging
 import sqlite3
 import yaml
 
+from smswall import *
+
 class SMSWall:
     def __init__(self, conf):
         self.msg = None
         self.conf = conf
         self.db = conf.db_conn
+        self.sender = self._init_sender(self.conf.sender_type)
         self._init_db(self.db)
         self.log = self.conf.log
-        self.log.debug("Init done.") 
+        self.log.debug("Init done.")
+
+    def _init_sender(self, sender_type):
+        """ Returns a Sender object according to the specified sender type.
+        Currently, we support one type of Sender:
+            - "log": Write the sent SMS messages to a log file
+        """
+        if sender_type == "log":
+            return LogSender
+        raise ValueError("No sender of type '%s' exists." % sender_type)
 
     def _init_db(self, db_conn, purge=False):
         # XXX: Should use a separate connection for IMMEDIATE transactions?
@@ -30,7 +42,7 @@ class SMSWall:
         db.execute("CREATE TABLE IF NOT EXISTS %s (list TEXT, owner TEXT)" % self.conf.t_owner)
         db.execute("CREATE TABLE IF NOT EXISTS %s (time REAL, sender TEXT, receiver TEXT, command TEXT)" % self.conf.t_confirm)
         db.commit()
-        
+
 
     def handle_incoming(self, message, confirmed=False):
         self.log.info("Incoming: %s" % message)
@@ -102,7 +114,7 @@ class SMSWall:
             self.log.debug("Clearing confirm actions older than %d min." % age)
             db.execute("DELETE FROM %s WHERE time <= ?" % self.conf.t_confirm, (age_limit,))
         db.commit()
-            
+
 
     def reply(self, body):
         """ Convenience function to respond to the sender of the app's message.
@@ -113,4 +125,10 @@ class SMSWall:
 
     def send(self, message):
         """ Send the specified message. """
-        raise NotImplementedError
+        sender = message.sender
+        recv = message.recipient
+        subj = message.subject
+        body = message.body
+
+        # TODO: do something sensible with return value
+        self.sender.send_sms(sender, recv, subj, body)
