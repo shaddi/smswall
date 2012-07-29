@@ -9,6 +9,7 @@ class SMSWall:
         self.msg = None
         self.conf = conf
         self.db = conf.db_conn
+        self.cmd_handler = CommandHandler(self)
         self.sender = self._init_sender(self.conf.sender_type)
         self._init_db(self.db)
         self.log = self.conf.log
@@ -50,23 +51,10 @@ class SMSWall:
         if not message.is_valid():
             log.info("Ignoring invalid message.")
             return
-        if message.body.startswith(self.conf.cmd_char):
-            try:
-                cmd, args = message.body[1:].split(None, 1)
-                self.parse_command(message, cmd, args, confirmed)
-            except:
-                log.debug("Failed to process command: %s" % message)
-        elif message.recipient == self.conf.app_number:
-            # XXX: should we assert confirmed==False here?
-            if "confirm" in message.body:
-                self.confirm_action(message.sender)
+        elif CommandHandler.looks_like_command(message):
+            self.parse_command(message, confirmed)
         else:
             self.send_to_list(message)
-
-    def parse_command(self, message, command, arguments):
-        """ Recognize command, parse arguments, and call appropriate handler.
-        """
-        raise NotImplementedError
 
     def confirm_action(self, sender):
         """ Confirm some pending action. Sensitive actions, like deleting a
@@ -74,7 +62,7 @@ class SMSWall:
         actions are stored in the confirm_action table, which we should
         periodically flush. The stored action is just a command message that
         gets re-submitted to handle_incoming with the 'confirmed' flag set to
-        true. 
+        true.
         """
         r = self.db.execute("SELECT sender, receiver, command FROM %s WHERE sender=?" % self.conf.t_confirm, sender)
         conf_actions = r.fetchall()
@@ -132,3 +120,18 @@ class SMSWall:
 
         # TODO: do something sensible with return value
         self.sender.send_sms(sender, recv, subj, body)
+
+    def parse_command(self, message, confirmed):
+        """ Recognize command, parse arguments, and call appropriate handler.
+        """
+        if message.body.startswith(self.conf.command_char):
+            body = message.body[1:]
+        else:
+            body = message.body
+
+        if len(body.split()) > 1:
+            cmd, args = message.body.split(None, 1)
+        else:
+            cmd = message.body.split()[0]
+            args = None
+        self.cmd_handler.dispatch(message, cmd, args, confirmed)

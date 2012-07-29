@@ -13,6 +13,9 @@ class List:
             return True
         return False
 
+    def is_reserved(self):
+        return self.shortcode == self.conf.app_number
+
     def is_owner(self, number):
         r = self.db.execute("SELECT * FROM %s WHERE list=? AND owner=?" % self.conf.t_owner, (self.shortcode, number))
         if r.rowcount:
