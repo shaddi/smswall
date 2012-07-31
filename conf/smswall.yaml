@@ -1,17 +1,18 @@
 # DB settings
-db_file:        'smswall.sqlite3'
+db_file:                'smswall.sqlite3'
 
 # DB schema
-t_list:         'list'
-t_membership:   'membership'
-t_owner:        'owner'
-t_confirm:      'confirm'
+t_list:                 'list'
+t_membership:           'membership'
+t_owner:                'owner'
+t_confirm:              'confirm'
 
 # Sender settings
-sender_type:    'log'
+sender_type:            'log'
 
 # App settings
-command_char:   '.'
-app_number:     1000
-min_shortcode:  1001
-max_shortcode:  9999
+command_char:           '.'
+app_number:             1000
+min_shortcode:          1001
+max_shortcode:          9999
+allow_list_creation:    Yes

@@ -131,7 +131,16 @@ class SMSWall:
 
         if len(body.split()) > 1:
             cmd, args = message.body.split(None, 1)
-        else:
+            args = args.split()
+        elif len(body.split()) == 1:
             cmd = message.body.split()[0]
             args = None
-        self.cmd_handler.dispatch(message, cmd, args, confirmed)
+        else:
+            cmd = None
+            args = None
+
+        try:
+            self.cmd_handler.dispatch(message, cmd, args, confirmed)
+        except CommandError as e:
+            self.reply(e) # Send the failure message to the user.
+            raise e # Then die.

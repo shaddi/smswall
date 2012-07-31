@@ -35,6 +35,9 @@ class List:
         return bool(r.fetchone()[0])
 
     def create(self, initial_owner, owners_only=False, is_public=True):
+        if not self.conf.allow_list_creation:
+            self.app.reply("List creation is disabled, sorry!")
+
         if not self.app.is_valid_shortcode(self.shortcode):
             self.app.reply("The shortcode you selected is invalid. Please " \
                            + "choose a number between %d and %d." % \
@@ -78,6 +81,9 @@ class List:
     def add_user(self, number):
         """ Add the specified user to the list """
         self.conf.log.info("Adding user '%s' to list '%s'" % (number, self.shortcode))
+        if not self.exists():
+            self.app.reply("You can't join the list '%s' because it doesn't exist!" % self.shortcode)
+            return
         item = (self.shortcode, number)
         db.execute("INSERT OR IGNORE INTO %s(list, member) VALUES (?,?)" % self.conf.t_membership, item)
         db.commit()
@@ -91,6 +97,7 @@ class List:
         db = self.db
         db.execute("DELETE FROM %s WHERE member=?" % self.conf.t_membership, (number,))
         db.execute("DELETE FROM %s WHERE list=? AND owner=?" % self.conf.t_owner, (self.shortcode, number))
+        # TODO: send "you've been removed"
         db.commit()
 
     def set_owner_only_posting(self, owners_only):

@@ -23,6 +23,10 @@ class Config:
         return string
 
     @property
+    def allow_list_creation(self):
+        return self.config_dict['allow_list_creation'] is True
+
+    @property
     def t_list(self):
         return self._scrub(self.config_dict['t_list'])
 
