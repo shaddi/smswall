@@ -1,4 +1,4 @@
-#!/usr/bin/python 
+#!/usr/bin/python
 import argparse
 import logging
 import yaml
@@ -11,9 +11,9 @@ parser.add_argument('--from', '-f', action='store', dest='sender', \
 parser.add_argument('--to', '-t', action='store', dest='recipient', \
                     help="Recipient of incoming message.")
 parser.add_argument('--subject', '-s', action='store', dest='subject', \
-                    help="Subject of incoming message.", default="") 
+                    help="Subject of incoming message.", default="")
 parser.add_argument('--message', '-m', action='store', dest='message', \
-                    help="Body of incoming message.") 
+                    help="Body of incoming message.")
 parser.add_argument('--clean-confirm', action='store', dest='clean', \
                     help="Remove all pending confirm actions older than " +
                          "given age (0 removes everything).", type=int)
