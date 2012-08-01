@@ -202,7 +202,7 @@ def perf3_testcase():
     print "Join: %s sec per list join" % (r)
     t = timeit.Timer('run("python smswall.py -t 1500 -f 1234 -m testmessage")', "from __main__ import run")
     r = t.timeit(num) / num
-    print "Post: %s sec per post" % (r)
+    print "Post: %s sec per post (sent to %d users, %.5f per user)" % (r, num, r/num)
 
 def perf4_testcase():
     clear()
@@ -214,7 +214,7 @@ def perf4_testcase():
     print "Join: %s sec per list join" % (r)
     t = timeit.Timer('run("python smswall.py -t 1500 -f 1234 -m testmessage")', "from __main__ import run")
     r = t.timeit(num) / num
-    print "Post: %s sec per post" % (r)
+    print "Post: %s sec per post (sent to %d users, %.5f per user)" % (r, num, r/num)
 
 if __name__ == "__main__":
     global verbose
