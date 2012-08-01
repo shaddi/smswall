@@ -1,3 +1,5 @@
+from smswall import *
+
 class CommandError(RuntimeError):
     def __init__(self, value):
         self.value = value
@@ -54,18 +56,20 @@ class CommandHandler(object):
 
         # Check if an app number command was sent to the right place
         recp = message.recipient
-        app_number = self.conf.app_number
-        if cmd in app_commands and not recp == app_number:
+        app_number = str(self.conf.app_number)
+        if cmd in CommandHandler.app_commands and not recp == app_number:
             e = "The command '%s' must be sent to list %s." % (cmd, app_number)
             raise CommandError(e)
+
+        if not arguments:
+            arguments = []
 
         handler_func = self.commands[cmd]
         handler_func(message, cmd, arguments, confirmed)
 
-    @staticmethod
-    def looks_like_command(message):
+    def looks_like_command(self, message):
         body = message.body
-        has_cmd_char = body.startswith(self.conf.command_char)
+        has_cmd_char = body.startswith(self.conf.cmd_char)
         if has_cmd_char:
             cmd = body[1:].split()[0]
         elif len(body.split()) >= 1:
@@ -80,13 +84,13 @@ class CommandHandler(object):
         # malformed.
         return has_cmd_char or cmd in self.commands.keys()
 
-    def invalid_command(command):
+    def invalid_command(self, command):
         if not command:
             e = "Invalid command. Send 'help' to %s for a list of commands." \
                 % (self.conf.app_number)
         else:
             e = "Invalid command. Send 'help %s' to %s for info." % \
-                ("create", self.conf.app_number)
+                (command, self.conf.app_number)
         raise CommandError(e)
 
     def create_list(self, message, cmd, args, confirmed):
@@ -139,7 +143,7 @@ class CommandHandler(object):
                         "confirm": "Send 'confirm' to %s to confirm a pending action." % self.conf.app_number
                        }
         if cmd == "help":
-            if len(args) == 0:
+            if not args or len(args) == 0:
                 help_cmd = "help"
             else:
                 help_cmd = args[0]
@@ -249,10 +253,10 @@ class CommandHandler(object):
         """
         if not len(args) == 1:
             self.invalid_command("addowner")
-        l = List(shortcode, self.app)
+        l = List(message.recipient, self.app)
         if not l.is_owner(message.sender):
             raise CommandError("Sorry, only a list owner may do that.")
-        l.makeowner(args[0])
+        l.make_owner(args[0])
 
     def removeowner(self, message, cmd, args, confirmed):
         """
@@ -261,10 +265,10 @@ class CommandHandler(object):
         """
         if not len(args) == 1:
             self.invalid_command("removeowner")
-        l = List(shortcode, self.app)
+        l = List(message.recipient, self.app)
         if not l.is_owner(message.sender):
             raise CommandError("Sorry, only a list owner may do that.")
-        l.unmakeowner(args[0])
+        l.unmake_owner(args[0])
 
     def confirm(self, message, cmd, args, confirmed):
         """

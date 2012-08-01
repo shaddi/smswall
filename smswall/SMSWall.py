@@ -1,5 +1,6 @@
 import logging
 import sqlite3
+import time
 import yaml
 
 from smswall import *
@@ -10,18 +11,21 @@ class SMSWall:
         self.conf = conf
         self.db = conf.db_conn
         self.cmd_handler = CommandHandler(self)
-        self.sender = self._init_sender(self.conf.sender_type)
+        self.msg_sender = self._init_sender(self.conf.sender_type)
         self._init_db(self.db)
         self.log = self.conf.log
         self.log.debug("Init done.")
 
     def _init_sender(self, sender_type):
         """ Returns a Sender object according to the specified sender type.
-        Currently, we support one type of Sender:
+        Currently, we support two types of Sender:
             - "log": Write the sent SMS messages to a log file
+            - "test": Write the sent SMS messages to an easy-to-parse log
         """
         if sender_type == "log":
-            return LogSender
+            return LogSender()
+        if sender_type == "test":
+            return TestSender()
         raise ValueError("No sender of type '%s' exists." % sender_type)
 
     def _init_db(self, db_conn, purge=False):
@@ -38,11 +42,22 @@ class SMSWall:
         # Parameter substitution doesn't work for table names, but we scrub
         # unsafe names in the accessors for the table name properties so these
         # should be fine.
-        db.execute("CREATE TABLE IF NOT EXISTS %s (shortcode TEXT, owner_only INTEGER, is_public INTEGER)" % self.conf.t_list)
-        db.execute("CREATE TABLE IF NOT EXISTS %s (list TEXT, member TEXT)" % self.conf.t_membership)
-        db.execute("CREATE TABLE IF NOT EXISTS %s (list TEXT, owner TEXT)" % self.conf.t_owner)
+        db.execute("CREATE TABLE IF NOT EXISTS %s (shortcode TEXT PRIMARY KEY, owner_only INTEGER, is_public INTEGER)" % self.conf.t_list)
+        db.execute("CREATE TABLE IF NOT EXISTS %s (list TEXT, member TEXT, UNIQUE(list, member) ON CONFLICT IGNORE)" % self.conf.t_membership)
+        db.execute("CREATE TABLE IF NOT EXISTS %s (list TEXT, owner TEXT, UNIQUE(list, owner) ON CONFLICT IGNORE)" % self.conf.t_owner)
         db.execute("CREATE TABLE IF NOT EXISTS %s (time REAL, sender TEXT, receiver TEXT, command TEXT)" % self.conf.t_confirm)
         db.commit()
+
+    def is_valid_shortcode(self, number):
+        try:
+            sc = int(number)
+        except ValueError:
+            return False
+
+        if sc >= self.conf.min_shortcode and sc <= self.conf.max_shortcode:
+            return True
+
+        return False
 
 
     def handle_incoming(self, message, confirmed=False):
@@ -51,10 +66,10 @@ class SMSWall:
         if not message.is_valid():
             log.info("Ignoring invalid message.")
             return
-        elif CommandHandler.looks_like_command(message):
+        elif self.cmd_handler.looks_like_command(message):
             self.parse_command(message, confirmed)
         else:
-            self.send_to_list(message)
+            self.post_to_list(message)
 
     def confirm_action(self, sender):
         """ Confirm some pending action. Sensitive actions, like deleting a
@@ -64,7 +79,8 @@ class SMSWall:
         gets re-submitted to handle_incoming with the 'confirmed' flag set to
         true.
         """
-        r = self.db.execute("SELECT sender, receiver, command FROM %s WHERE sender=?" % self.conf.t_confirm, sender)
+        db = self.db
+        r = db.execute("SELECT sender, receiver, command FROM %s WHERE sender=?" % self.conf.t_confirm, (sender,))
         conf_actions = r.fetchall()
         if len(conf_actions) == 0:
             self.reply("There is nothing awaiting confirmation for you.")
@@ -72,7 +88,9 @@ class SMSWall:
 
         assert(len(conf_actions) == 1)
         sender, recipient, command = conf_actions[0]
-        confirm_msg = Message(sender, recpipient, None, command)
+        confirm_msg = Message(sender, recipient, None, command)
+        i = (sender,)
+        db.execute("DELETE FROM %s WHERE sender=?" % self.conf.t_confirm, i)
         self.handle_incoming(confirm_msg, True)
 
     def add_pending_action(self, message):
@@ -88,6 +106,9 @@ class SMSWall:
     def post_to_list(self, message):
         """ Post a message to a list. """
         list_ = List(message.recipient, self)
+        if list_.only_owners_can_post() and not list_.is_owner(message.sender):
+            self.reply("Sorry, only list owners may post to this list.")
+            return
         list_.post(message)
 
     def clean_confirm_actions(self, age):
@@ -119,12 +140,12 @@ class SMSWall:
         body = message.body
 
         # TODO: do something sensible with return value
-        self.sender.send_sms(sender, recv, subj, body)
+        self.msg_sender.send_sms(sender, recv, subj, body)
 
     def parse_command(self, message, confirmed):
         """ Recognize command, parse arguments, and call appropriate handler.
         """
-        if message.body.startswith(self.conf.command_char):
+        if message.body.startswith(self.conf.cmd_char):
             body = message.body[1:]
         else:
             body = message.body
@@ -142,5 +163,4 @@ class SMSWall:
         try:
             self.cmd_handler.dispatch(message, cmd, args, confirmed)
         except CommandError as e:
-            self.reply(e) # Send the failure message to the user.
-            raise e # Then die.
+            self.reply(str(e)) # Send the failure message to the user.

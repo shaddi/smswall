@@ -40,17 +40,21 @@ if args.debug_mode:
 else:
     logging.basicConfig(filename=args.logfile)
 
-conf = smswall.Config(config_dict, log)
-msg = smswall.Message(args.sender, args.recipient, args.subject, args.message)
-app = smswall.SMSWall(conf)
+try:
+    conf = smswall.Config(config_dict, log)
+    msg = smswall.Message(args.sender, args.recipient, args.subject, args.message)
+    app = smswall.SMSWall(conf)
 
-# Do this before processing any messages so we don't trash any confirm
-# actions the message creates.
-if args.clean is not None:
-    app.clean_confirm_actions(args.clean)
+    # Do this before processing any messages so we don't trash any confirm
+    # actions the message creates.
+    if args.clean is not None:
+        app.clean_confirm_actions(args.clean)
 
-# No point in handling an empty message, do this to keep logs cleaner.
-if not msg.is_empty():
-    app.handle_incoming(msg)
-
-app.db.close()
+    # No point in handling an empty message, do this to keep logs cleaner.
+    if not msg.is_empty():
+        app.handle_incoming(msg)
+except:
+    logging.exception('Exception')
+    raise
+finally:
+    app.db.close()
