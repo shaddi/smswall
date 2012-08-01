@@ -8,7 +8,7 @@ t_owner:                'owner'
 t_confirm:              'confirm'
 
 # Sender settings
-sender_type:            'log'
+sender_type:            'test'
 
 # App settings
 command_char:           '.'
