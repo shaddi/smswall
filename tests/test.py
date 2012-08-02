@@ -42,9 +42,12 @@ def get_table_string(table):
     return s
 
 def start(description=None):
-    print "BEGIN TEST"
-    if description:
-        print description
+    global quiet
+    if not quiet:
+        if description:
+            print "BEGIN TEST --> %s" % description
+        else:
+            print "BEGIN TEST"
 
 
 def run(command, db=False, log=False):
@@ -293,10 +296,14 @@ if __name__ == "__main__":
     parser.add_argument("-p", action="store_true", dest='perf', help="Run performance tests (default: false).")
     parser.add_argument("-s", action="store_true", dest='stress', help="Run stress tests (default: false).")
     parser.add_argument("-v", action="store_true", dest='verbose', help="Be verbose (default: false).")
+    parser.add_argument("-q", action="store_true", dest='quiet', help="Be quiet (only show test results; default: false).")
     args = parser.parse_args()
 
     global verbose
     verbose = args.verbose
+
+    global quiet
+    quiet = args.quiet
 
     basic = True
     perf = False
