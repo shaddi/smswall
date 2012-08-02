@@ -32,6 +32,12 @@ config_dict = yaml.load("".join(conf_file.readlines()))
 
 log = logging.getLogger('smswall')
 
+
+if args.clean is None and not (args.message and args.sender and args.recipient):
+    print "You must specify either '--clean-confirm' or all of '--to', '--from', and '--message'."
+    parser.print_usage()
+    exit()
+
 # XXX Remove when done with development!
 args.debug_mode = True
 
@@ -50,11 +56,11 @@ try:
     if args.clean is not None:
         app.clean_confirm_actions(args.clean)
 
+
     # No point in handling an empty message, do this to keep logs cleaner.
     if not msg.is_empty():
         app.handle_incoming(msg)
+    app.db.close()
 except:
     logging.exception('Exception')
     raise
-finally:
-    app.db.close()
