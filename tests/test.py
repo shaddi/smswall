@@ -6,6 +6,12 @@ import logging
 import sqlite3
 import timeit
 
+"""
+Hacky hacky hacky testing for smswall. Make sure your config is set to use the
+'test' sender type or this will fail! To run stress tests, you need to modify
+the appropriate parameter in __main__.
+"""
+
 # globals
 count = 0
 verbose = False
@@ -171,6 +177,53 @@ def testcase6():
     assert query("select * from membership where list='1600'") == 1
     assert query("select * from confirm where sender=12345") == 0
 
+def testcase7():
+    clear()
+    start("Test 7: Test removing a user from a list.")
+    run("python smswall.py -t 1000 -f 12345 -m 'create 1600'")
+    run("python smswall.py -t 1600 -f 55555 -m 'join'")
+    assert query("select * from membership where list='1600'") == 2
+    run("python smswall.py -t 1600 -f 55555 -m 'remove 55555'")
+    assert query("select * from membership where list='1600'") == 2
+    run("python smswall.py -t 1600 -f 12345 -m 'remove 55555'")
+    assert query("select * from membership where list='1600'") == 1
+
+def testcase8():
+    clear()
+    start("Test 8: Test making a user an owner then removing them.")
+    # make the list
+    run("python smswall.py -t 1000 -f 12345 -m 'create 1600'")
+    assert query("select * from membership where list='1600'") == 1
+    assert query("select * from owner where list='1600'") == 1
+    # add an owner
+    run("python smswall.py -t 1600 -f 12345 -m 'addowner 55555'")
+    assert query("select * from membership where list='1600'") == 2
+    assert query("select * from owner where list='1600'") == 2
+    # make sure the new owner can do owner-y things
+    run("python smswall.py -t 1600 -f 55555 -m 'makeclosed'")
+    assert query("select * from list where shortcode=1600 and owner_only=1") == 1
+    # revoke their ownership
+    run("python smswall.py -t 1600 -f 12345 -m 'removeowner 55555'")
+    assert query("select * from membership where list='1600'") == 2
+    assert query("select * from owner where list='1600'") == 1
+    # ensure the old owner can't do owner-y things
+    run("python smswall.py -t 1600 -f 55555 -m 'makeopen'")
+    assert query("select * from list where shortcode=1600 and owner_only=1") == 1
+
+def testcase9():
+    clear()
+    start("Test 9: Make a user join then leave a list.")
+    # make the list
+    run("python smswall.py -t 1000 -f 12345 -m 'create 1600'")
+    assert query("select * from membership where list='1600'") == 1
+    assert query("select * from owner where list='1600'") == 1
+
+    run("python smswall.py -t 1600 -f 55555 -m 'join'")
+    assert query("select * from membership where list='1600'") == 2
+
+    run("python smswall.py -t 1600 -f 55555 -m 'leave'")
+    assert query("select * from membership where list='1600'") == 1
+
 """
 Performance tests.
 """
@@ -213,8 +266,26 @@ def perf4_testcase():
     r = t.timeit(num) / num
     print "Join: %s sec per list join" % (r)
     t = timeit.Timer('run("python smswall.py -t 1500 -f 1234 -m testmessage")', "from __main__ import run")
-    r = t.timeit(num) / num
-    print "Post: %s sec per post (sent to %d users, %.5f per user)" % (r, num, r/num)
+    r = t.timeit(100) / 100
+    print "Post: %s sec per post (sent to %d users, %.6f per user)" % (r, num, r/num)
+
+"""
+Stress tests -- off by default; if we pass these we pass Burning Man.
+"""
+def stress1_testcase():
+    clear()
+    num = 1000000
+    start("Stress test 1: Create 1 list, %d users. Handle %d posts." % (num, num))
+    run("python smswall.py -t 1000 -f 1234 -m 'create 1500'")
+    print "Adding users... "
+    db = sqlite3.connect(db_file)
+    for i in xrange(100000, 200000):
+        db.execute("insert into membership(list, member) values (?,?)", (1500, i))
+    db.commit()
+    print "Users added."
+    t = timeit.Timer('run("python smswall.py -t 1500 -f 1234 -m testmessage")', "from __main__ import run")
+    r = t.timeit(100) / 100
+    print "Post: %s sec per post (sent to %d users, %.6f per user)" % (r, num, r/num)
 
 if __name__ == "__main__":
     global verbose
@@ -222,8 +293,19 @@ if __name__ == "__main__":
         if sys.argv[1] == "v":
             verbose = True
 
+    basic = True
+    perf = False
+    stress = False
+
+    tests = []
     global_vars = globals().copy()
-    tests = sorted([eval(i) for i in global_vars if ("testcase" in i)])
+    if basic:
+        tests += sorted([eval(i) for i in global_vars if ("testcase" in i and not "stress" in i and not "perf" in i)])
+    if perf:
+        tests = sorted([eval(i) for i in global_vars if ("testcase" in i and "perf" in i)])
+    if stress:
+        tests = sorted([eval(i) for i in global_vars if ("testcase" in i and "stress" in i)])
+        print "WARNING: Running stress tests. This will take a while!"
     for t in tests:
         try:
             t()

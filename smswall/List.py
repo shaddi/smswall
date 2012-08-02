@@ -136,7 +136,7 @@ class List:
         self.conf.log.info("Removing user '%s' as owner of list '%s'" % (number, self.shortcode))
         db = self.db
         t_owner = self.conf.t_owner
-        db.execute("DELETE FROM %s WHERE list=?" % t_owner, (self.shortcode, number))
+        db.execute("DELETE FROM %s WHERE list=? AND owner=?" % t_owner, (self.shortcode, number))
         db.commit()
 
     def post(self, message):
