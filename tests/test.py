@@ -1,3 +1,4 @@
+import argparse
 import os
 import subprocess
 import sys
@@ -14,7 +15,6 @@ the appropriate parameter in __main__.
 
 # globals
 count = 0
-verbose = False
 db_file = "smswall.sqlite3"
 
 def query(sql):
@@ -288,14 +288,26 @@ def stress1_testcase():
     print "Post: %s sec per post (sent to %d users, %.6f per user)" % (r, num, r/num)
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Tester for smswall. By default, only runs basic tests.")
+    parser.add_argument("-b", action="store_true", dest='basic', help="Run basic tests (default: true).")
+    parser.add_argument("-p", action="store_true", dest='perf', help="Run performance tests (default: false).")
+    parser.add_argument("-s", action="store_true", dest='stress', help="Run stress tests (default: false).")
+    parser.add_argument("-v", action="store_true", dest='verbose', help="Be verbose (default: false).")
+    args = parser.parse_args()
+
     global verbose
-    if len(sys.argv) > 1:
-        if sys.argv[1] == "v":
-            verbose = True
+    verbose = args.verbose
 
     basic = True
     perf = False
     stress = False
+
+    if args.perf:
+        perf = True
+        basic = args.basic
+    if args.stress:
+        stress = True
+        basic = args.basic
 
     tests = []
     global_vars = globals().copy()
