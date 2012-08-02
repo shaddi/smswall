@@ -277,7 +277,7 @@ Stress tests -- off by default; if we pass these we pass Burning Man.
 """
 def stress1_testcase():
     clear()
-    num = 1000000
+    num = 100000
     start("Stress test 1: Create 1 list, %d users. Handle %d posts." % (num, num))
     run("python smswall.py -t 1000 -f 1234 -m 'create 1500'")
     print "Adding users... "
