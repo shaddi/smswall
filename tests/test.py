@@ -302,9 +302,9 @@ if __name__ == "__main__":
     if basic:
         tests += sorted([eval(i) for i in global_vars if ("testcase" in i and not "stress" in i and not "perf" in i)])
     if perf:
-        tests = sorted([eval(i) for i in global_vars if ("testcase" in i and "perf" in i)])
+        tests += sorted([eval(i) for i in global_vars if ("testcase" in i and "perf" in i)])
     if stress:
-        tests = sorted([eval(i) for i in global_vars if ("testcase" in i and "stress" in i)])
+        tests += sorted([eval(i) for i in global_vars if ("testcase" in i and "stress" in i)])
         print "WARNING: Running stress tests. This will take a while!"
     for t in tests:
         try:
