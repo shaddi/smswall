@@ -4,6 +4,7 @@ import subprocess
 import sys
 import commands
 import logging
+import random
 import sqlite3
 import timeit
 
@@ -272,6 +273,30 @@ def perf4_testcase():
     r = t.timeit(100) / 100
     print "Post: %s sec per post (sent to %d users, %.6f per user)" % (r, num, r/num)
 
+def perf5_testcase():
+    clear()
+    num = 100
+    start("Perf test 5: Create %d lists, 3 users on each, post to every list." % (num))
+    for i in xrange(1, num+1):
+        run("python smswall.py -t 1000 -f 12345 -m 'create %d'" % (i+3000))
+        for j in xrange(0,2):
+            run("python smswall.py -t %d -f %d -m 'join'" % (i+3000, j + random.randint(100000,200000)))
+    t = timeit.Timer('run("python smswall.py -t %d -f 12345 -m testmessage" % (counter()+3000))', "from __main__ import run, counter")
+    r = t.timeit(num) / num
+    print "Post: %s sec per post (sent to 3 users, %.5f per user)" % (r, r/3)
+
+def perf6_testcase():
+    clear()
+    num = 1000
+    start("Perf test 6: Create %d lists, 3 users on each, post to every list." % (num))
+    for i in xrange(1, num+1):
+        run("python smswall.py -t 1000 -f 12345 -m 'create %d'" % (i+3000))
+        for j in xrange(0,2):
+            run("python smswall.py -t %d -f %d -m 'join'" % (i+3000, j + random.randint(100000,200000)))
+    t = timeit.Timer('run("python smswall.py -t %d -f 12345 -m testmessage" % (counter()+3000))', "from __main__ import run, counter")
+    r = t.timeit(num) / num
+    print "Post: %s sec per post (sent to 3 users, %.5f per user)" % (r, r/3)
+
 """
 Stress tests -- off by default; if we pass these we pass Burning Man.
 """
@@ -289,6 +314,28 @@ def stress1_testcase():
     t = timeit.Timer('run("python smswall.py -t 1500 -f 1234 -m testmessage")', "from __main__ import run")
     r = t.timeit(100) / 100
     print "Post: %s sec per post (sent to %d users, %.6f per user)" % (r, num, r/num)
+
+def stress2_testcase():
+    clear()
+    num = 7500
+    num_users = 500
+    start("Stress test 2: Create %d lists, %d users on each, post to every list, in parallel." % (num, num_users))
+    print "Setting up... (this may take a few minutes, adding >%d records to the DB!)" % (num*num_users)
+    run("python smswall.py -t 1000 -f 1234 -m 'create 9998'") # just to initialize things, we never use this
+    db = sqlite3.connect(db_file)
+    for i in xrange(1, num+1):
+        if i % 1000 == 0:
+            print "Creating %dth list." % i
+        db.execute("insert into list values(?, ?, ?)", (i+2000, False, True))
+        db.execute("insert into owner(list, owner) values(?, 12345)", (i+2000,))
+        db.execute("insert into membership(list, member) values(?, 12345)", (i+2000,))
+        for j in xrange(0,num_users-1): # owner is a member!
+            db.execute("insert into membership(list, member) values(?, ?)", (i+2000, random.randint(100000,200000)))
+    db.commit()
+    print "Setup done."
+    t = timeit.Timer('run("python smswall.py -t %d -f 12345 -m testmessage &" % (counter()+2000))', "from __main__ import run, counter")
+    r = t.timeit(num) / num
+    print "Post: %s sec per post (sent to %d users, %.5f per user)" % (r, num_users, r/num_users)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Tester for smswall. By default, only runs basic tests.")
