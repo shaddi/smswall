@@ -9,5 +9,6 @@ setup(name="smswall",
       license='bsd',
       packages=['smswall'],
       scripts=['smswall.py'],
-      data_files=[('/etc/', ['conf/smswall.yaml'])]
+      data_files=[('/etc/', ['conf/smswall.yaml']),
+                  ('/usr/local/share/yate/scripts/', ['yate/Yate_SMSWall.py'])]
 )

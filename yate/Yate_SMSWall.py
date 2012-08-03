@@ -9,7 +9,7 @@ import smswall
 import yaml
 
 class YateSender(smswall.Sender):
-	
+
 	def __init__(self, smsw):
 		self.smsw = smsw
 
@@ -45,20 +45,20 @@ class SMSWall:
 					return
 			self.app.Output("SMSWall received: " +  self.app.name + " id: " + self.app.id)
 			self.log.info("SMSWall received: " +  self.app.name + " id: " + self.app.id)
-			self.app.handled = True			
+			self.app.handled = True
 			self.app.retval = "202"
 			self.app.Acknowledge()
-			
+
 			try:
 				sender = self.ym.SR_get("callerid", ("name", res["caller"]))
 				recipient = res['vbts_tp_dest_address']
 				message = res['vbts_text']
-				msg = smswall.Message(sender, recipient, None, message) 
+				msg = smswall.Message(sender, recipient, None, message)
 				app = smswall.SMSWall(self.conf)
 				ys = YateSender(self)
 				app.msg_sender = ys
 				app.handle_incoming(msg)
-				
+
 			except Exception as e:
 				self.app.Output(str(e))
 
@@ -70,7 +70,7 @@ class SMSWall:
 			self.app.Output("SMSWall Uninstalled: " + self.app.name )
 		else:
 			self.app.Output("SMSWall event: " + self.app.type )
-			
+
 	def uninstall(self):
 		for (msg, pri) in self.to_be_handled:
 			self.app.Uninstall(msg)
@@ -91,7 +91,7 @@ class SMSWall:
 		except:
 			self.app.Output("Unexpected error:" + str(sys.exc_info()[0]))
 			self.close()
-					
+
 	def close(self):
 		self.uninstall()
 		self.app.close()
