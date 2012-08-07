@@ -48,6 +48,9 @@ class CommandHandler(object):
         sure the command exists and is directed to a valid number before
         dispatching.
         """
+        # case insensitive -- lowercase is impossible in T9-land!
+        cmd = cmd.lower()
+
         # Don't dispatch non-commands
         if not cmd in self.commands:
             e = "The command '%s' doesn't exist. Try sending 'help' to %s." \
@@ -71,9 +74,9 @@ class CommandHandler(object):
         body = message.body
         has_cmd_char = body.startswith(self.conf.cmd_char)
         if has_cmd_char:
-            cmd = body[1:].split()[0]
+            cmd = body[1:].split()[0].lower()
         elif len(body.split()) >= 1:
-            cmd = body.split()[0]
+            cmd = body.split()[0].lower()
         else:
             return False
 

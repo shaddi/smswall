@@ -143,7 +143,7 @@ class List:
         self.conf.log.info("Posting to list '%s' message: %s" % (self.shortcode, message))
         item = (self.shortcode,)
         r = self.db.execute("SELECT member FROM membership WHERE list=?", item)
-        members = r.fetchall()
+        members = [str(m[0]) for m in r.fetchall() if not str(m[0]) == str(message.sender)]
         for m in members:
-            msg = Message(message.sender, str(m[0]), message.subject, message.body)
+            msg = Message(self.shortcode, m, message.subject, message.body + " --from: %s" % message.sender)
             self.app.send(msg)

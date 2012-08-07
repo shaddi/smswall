@@ -159,8 +159,8 @@ def testcase5():
     assert query("select * from owner where list=1600") == 2
 
     run("python smswall.py -t 1600 -f 55555 -m 'testmessage'")
-    assert log_has_string("[1, '55555', '55555', '', 'testmessage']")
-    assert not log_has_string("[2, '55555', '55555', '', 'testmessage']")
+    assert log_has_string("[0, '1600', '12345', '', 'testmessage --from: 55555']")
+    assert not log_has_string("[1, '1600', '55555', '', 'testmessage --from: 55555']")
 
     run("python smswall.py -t 1600 -f 12345 -m 'makeopen'")
     assert query("select * from list where shortcode=1600 and owner_only=0") == 1
@@ -227,6 +227,15 @@ def testcase9():
 
     run("python smswall.py -t 1600 -f 55555 -m 'leave'")
     assert query("select * from membership where list='1600'") == 1
+
+def testcase10():
+    clear()
+    start("Test 10: Test handling uppercase commands")
+    run("python smswall.py -t 1000 -f 12345 -m 'CREATE 1500'")
+    run("python smswall.py -t 1500 -f 12345 -m 'Add 43210'")
+    run("python smswall.py -t 1500 -f 12345 -m 'Test Message'")
+    assert query("select * from list where shortcode='1500'") == 1
+    assert query("select * from membership where list='1500'") == 2
 
 """
 Performance tests.
