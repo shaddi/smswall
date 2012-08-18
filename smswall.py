@@ -38,9 +38,6 @@ if args.clean is None and not (args.message and args.sender and args.recipient):
     parser.print_usage()
     exit()
 
-# XXX Remove when done with development!
-args.debug_mode = True
-
 if args.debug_mode:
     logging.basicConfig(filename=args.logfile, level=logging.DEBUG)
 else:

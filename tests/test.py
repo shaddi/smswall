@@ -139,7 +139,7 @@ def testcase5():
     run("python smswall.py -t 1600 -f 55555 -m 'join'")
     assert query("select * from membership where list='1600'") == 2
 
-    run("python smswall.py -t 1600 -f 12345 -m 'makeprivate 1600'")
+    run("python smswall.py --debug -t 1600 -f 12345 -m 'makeprivate 1600'")
     assert query("select * from list where shortcode=1600 and is_public=1") == 1
     assert log_has_string("Invalid command")
 
@@ -152,13 +152,13 @@ def testcase5():
     run("python smswall.py -t 1600 -f 12345 -m 'makeclosed'")
     assert query("select * from list where shortcode=1600 and owner_only=1") == 1
 
-    run("python smswall.py -t 1600 -f 55555 -m 'testmessage'")
+    run("python smswall.py --debug -t 1600 -f 55555 -m 'testmessage'")
     assert log_has_string("[0, 1000, '55555', None, 'Sorry, only list owners may post to this list.']")
 
     run("python smswall.py -t 1600 -f 12345 -m 'addowner 55555'")
     assert query("select * from owner where list=1600") == 2
 
-    run("python smswall.py -t 1600 -f 55555 -m 'testmessage'")
+    run("python smswall.py --debug -t 1600 -f 55555 -m 'testmessage'")
     assert log_has_string("[0, '1600', '12345', '', 'testmessage --from: 55555']")
     assert not log_has_string("[1, '1600', '55555', '', 'testmessage --from: 55555']")
 
