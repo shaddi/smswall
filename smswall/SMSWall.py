@@ -106,6 +106,9 @@ class SMSWall:
     def post_to_list(self, message):
         """ Post a message to a list. """
         list_ = List(message.recipient, self)
+        if not list_.exists():
+            self.reply("The list %s doesn't exist." % message.recipient)
+            return
         if list_.only_owners_can_post() and not list_.is_owner(message.sender):
             self.reply("Sorry, only list owners may post to this list.")
             return

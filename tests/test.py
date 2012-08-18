@@ -237,6 +237,11 @@ def testcase10():
     assert query("select * from list where shortcode='1500'") == 1
     assert query("select * from membership where list='1500'") == 2
 
+def testcase11():
+    clear()
+    start("Test 11: Test sending to a non-existent list that user is not a member of.")
+    run("python smswall.py -t 1500 -f 12345 -m 'Test Message'") # just shouldn't fail
+
 """
 Performance tests.
 """
