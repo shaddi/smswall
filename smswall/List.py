@@ -97,7 +97,8 @@ class List:
         db = self.db
         db.execute("DELETE FROM %s WHERE member=?" % self.conf.t_membership, (number,))
         db.execute("DELETE FROM %s WHERE list=? AND owner=?" % self.conf.t_owner, (self.shortcode, number))
-        # TODO: send "you've been removed"
+        msg = Message(self.conf.app_number, number, None, "You've been removed from the list '%s'." % self.shortcode)
+        self.app.send(msg)
         db.commit()
 
     def set_owner_only_posting(self, owners_only):
