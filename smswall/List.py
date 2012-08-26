@@ -87,9 +87,13 @@ class List:
         item = (self.shortcode, number)
         db.execute("INSERT OR IGNORE INTO %s(list, member) VALUES (?,?)" % self.conf.t_membership, item)
         db.commit()
-        # TODO: only send message if insert actually touched something
         msg = Message(self.conf.app_number, number, None, "You've been added to the list '%s'." % self.shortcode)
         self.app.send(msg)
+
+        # Set the initial username to the number -- the user will get a message
+        # saying how to change it.
+        if self.app.get_username(number) == number:
+            self.app.set_username(number, number)
 
     def delete_user(self, number):
         """ Delete the specified user from the list """
@@ -145,6 +149,7 @@ class List:
         item = (self.shortcode,)
         r = self.db.execute("SELECT member FROM membership WHERE list=?", item)
         members = [str(m[0]) for m in r.fetchall() if not str(m[0]) == str(message.sender)]
+        name = self.app.get_username(str(message.sender))
         for m in members:
-            msg = Message(self.shortcode, m, message.subject, message.body + " --from: %s" % message.sender)
+            msg = Message(self.shortcode, m, message.subject, str("(from: %s) " % name) + message.body)
             self.app.send(msg)

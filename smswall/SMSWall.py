@@ -46,6 +46,7 @@ class SMSWall:
         db.execute("CREATE TABLE IF NOT EXISTS %s (list TEXT, member TEXT, UNIQUE(list, member) ON CONFLICT IGNORE)" % self.conf.t_membership)
         db.execute("CREATE TABLE IF NOT EXISTS %s (list TEXT, owner TEXT, UNIQUE(list, owner) ON CONFLICT IGNORE)" % self.conf.t_owner)
         db.execute("CREATE TABLE IF NOT EXISTS %s (time REAL, sender TEXT, receiver TEXT, command TEXT)" % self.conf.t_confirm)
+        db.execute("CREATE TABLE IF NOT EXISTS %s (number TEXT, name TEXT, UNIQUE(number) ON CONFLICT IGNORE)" % self.conf.t_name)
         db.commit()
 
     def is_valid_shortcode(self, number):
@@ -59,6 +60,25 @@ class SMSWall:
 
         return False
 
+    def set_username(self, number, name):
+        self.log.debug("Setting name %s: %s" % (number, name))
+        r = self.db.execute("SELECT * FROM %s WHERE number=?" % self.conf.t_name, (number,))
+        if len(r.fetchall()) == 0:
+            self.db.execute("INSERT INTO %s(number, name) VALUES (?,?)" % self.conf.t_name, (number, name))
+        else:
+            self.db.execute("UPDATE OR IGNORE %s SET name=? WHERE number=?" % self.conf.t_name, (name, number))
+        self.db.commit()
+        resp = "Your name has been set to '%s'. Send 'help setname' to %s for info on changing it." % (name, self.conf.app_number)
+        m = Message(self.conf.app_number, number, None, resp)
+        self.send(m)
+
+    def get_username(self, number):
+        r = self.db.execute("SELECT name FROM %s WHERE number=?" % self.conf.t_name, (number,))
+        try:
+            name = r.fetchone()[0]
+        except:
+            name = number
+        return name
 
     def handle_incoming(self, message, confirmed=False):
         self.log.info("Incoming: %s" % message)

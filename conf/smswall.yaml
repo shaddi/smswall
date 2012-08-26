@@ -1,11 +1,13 @@
 # DB settings
-db_file:                '/usr/local/share/yate/smswall.sqlite3'
+#db_file:                '/usr/local/share/yate/smswall.sqlite3'
+db_file:                'smswall.sqlite3'
 
 # DB schema
 t_list:                 'list'
 t_membership:           'membership'
 t_owner:                'owner'
 t_confirm:              'confirm'
+t_name:                 'name'
 
 # Sender settings
 sender_type:            'test'

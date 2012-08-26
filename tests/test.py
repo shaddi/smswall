@@ -159,8 +159,8 @@ def testcase5():
     assert query("select * from owner where list=1600") == 2
 
     run("python smswall.py --debug -t 1600 -f 55555 -m 'testmessage'")
-    assert log_has_string("[0, '1600', '12345', '', 'testmessage --from: 55555']")
-    assert not log_has_string("[1, '1600', '55555', '', 'testmessage --from: 55555']")
+    assert log_has_string("[0, '1600', '12345', '', '(from: 55555) testmessage']")
+    assert not log_has_string("[1, '1600', '55555', '', '(from: 55555) testmessage']")
 
     run("python smswall.py -t 1600 -f 12345 -m 'makeopen'")
     assert query("select * from list where shortcode=1600 and owner_only=0") == 1
@@ -241,6 +241,18 @@ def testcase11():
     clear()
     start("Test 11: Test sending to a non-existent list that user is not a member of.")
     run("python smswall.py -t 1500 -f 12345 -m 'Test Message'") # just shouldn't fail
+
+def testcase12():
+    clear()
+    start("Test 12: Test setting and changing username.")
+    run("python smswall.py --debug --from 11111 --to 1000 --message 'create 2000'")
+    assert log_has_string("Your name has been set to '11111'")
+    run("python smswall.py --debug --from 12345 --to 2000 --message 'join'")
+    assert log_has_string("Your name has been set to '12345'")
+    run("python smswall.py --debug --from 12345 --to 1000 --message 'setname foo'")
+    assert log_has_string("Your name has been set to 'foo'")
+    run("python smswall.py --debug --from 12345 --to 2000 --message 'test message'")
+    assert log_has_string("(from: foo)")
 
 """
 Performance tests.

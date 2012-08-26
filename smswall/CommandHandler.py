@@ -38,10 +38,11 @@ class CommandHandler(object):
                          "remove": self.remove,
                          "addowner": self.addowner,
                          "removeowner": self.removeowner,
+                         "setname": self.setname,
                          "confirm": self.confirm
                         }
 
-    app_commands = ["confirm", "create", "delete"]
+    app_commands = ["confirm", "create", "delete", "setname"]
 
     def dispatch(self, message, cmd, arguments, confirmed):
         """ Dispatch a command to the appropriate handler. We check to make
@@ -61,7 +62,7 @@ class CommandHandler(object):
         recp = message.recipient
         app_number = str(self.conf.app_number)
         if cmd in CommandHandler.app_commands and not recp == app_number:
-            e = "The command '%s' must be sent to list %s." % (cmd, app_number)
+            e = "The command '%s' must be sent to %s." % (cmd, app_number)
             raise CommandError(e)
 
         if not arguments:
@@ -133,6 +134,7 @@ class CommandHandler(object):
                         "help": "For more info send 'help <command>' to %s. Available commands: %s" % (self.conf.app_number, ", ".join(self.commands.keys())),
                         "create": "Send 'create <number>' to %s to create a new list with specified number." % self.conf.app_number,
                         "delete": "Send 'delete <number>' to %s to delete a list with specified number. Must be an owner of a list to delete it." % self.conf.app_number,
+                        "setname": "Send 'setname <name>' to %s to set your name (displayed when you send messages)." % self.conf.app_number,
                         "join": "Send 'join' to any list to join that list.",
                         "leave": "Send 'leave' to any list to leave that list.",
                         "makepublic": "Send 'makepublic' to any list you're an owner of to allow anyone to join; otherwise, list owners must add members.",
@@ -224,6 +226,14 @@ class CommandHandler(object):
         if not l.is_owner(message.sender):
             raise CommandError("Sorry, only a list owner may do that.")
         l.set_owner_only_posting(True)
+
+    def setname(self, message, cmd, args, confirmed):
+        """
+        This command is sent to the app. Used to set the username of a user.
+        """
+        if not len(args) == 1:
+            self.invalid_command("setname")
+        self.app.set_username(message.sender, args[0])
 
     def add(self, message, cmd, args, confirmed):
         """

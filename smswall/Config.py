@@ -43,6 +43,10 @@ class Config:
         return self._scrub(self.config_dict['t_confirm'])
 
     @property
+    def t_name(self):
+        return self._scrub(self.config_dict['t_name'])
+
+    @property
     def sender_type(self):
         return self.config_dict['sender_type']
 
