@@ -26,6 +26,7 @@ class SMSWall:
 		self.app = Yate()
 		self.app.__Yatecall__ = self.yatecall
 		self.log = logging.getLogger("SMSWall.SMSWall")
+        logging.basicConfig(filename="/var/log/smswall.log", level="DEBUG")
 		self.ym = YateMessenger.YateMessenger()
 		self.to_be_handled = to_be_handled
 
