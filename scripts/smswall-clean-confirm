@@ -1,0 +1,9 @@
+#!/bin/bash
+
+if [ $# -ne 1 ]
+then
+  echo "Usage: smswall-clean-confirm TIMEOUT_IN_MINS"
+  exit $E_BADARGS
+fi
+TIMEOUT=$1
+smswall-interactive --clean-confirm $TIMEOUT
