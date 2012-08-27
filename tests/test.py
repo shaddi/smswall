@@ -95,24 +95,24 @@ automatically run.
 def testcase1():
     clear()
     start("Test 1: Create list, add member, send to list.")
-    run("python smswall.py -t 1000 -f 12345 -m 'create 1500'")
-    run("python smswall.py -t 1500 -f 12345 -m 'add 43210'")
-    run("python smswall.py -t 1500 -f 12345 -m 'test message'")
+    run("python smswall-interactive -t 1000 -f 12345 -m 'create 1500'")
+    run("python smswall-interactive -t 1500 -f 12345 -m 'add 43210'")
+    run("python smswall-interactive -t 1500 -f 12345 -m 'test message'")
     assert query("select * from list where shortcode='1500'") == 1
     assert query("select * from membership where list='1500'") == 2
 
 def testcase2():
     clear()
     start("Test 2: Create list, add member, then delete list and confirm deletion.")
-    run("python smswall.py -t 1000 -f 12345 -m 'create 1600'")
-    run("python smswall.py -t 1600 -f 12345 -m 'add 43210'")
+    run("python smswall-interactive -t 1000 -f 12345 -m 'create 1600'")
+    run("python smswall-interactive -t 1600 -f 12345 -m 'add 43210'")
     assert query("select * from list where shortcode='1600'") == 1
     assert query("select * from membership where list='1600'") == 2
-    run("python smswall.py -t 1000 -f 12345 -m 'delete 1600'")
+    run("python smswall-interactive -t 1000 -f 12345 -m 'delete 1600'")
     assert query("select * from list where shortcode='1600'") == 1
     assert query("select * from membership where list='1600'") == 2
     assert query("select * from confirm where sender=12345") == 1
-    run("python smswall.py -t 1000 -f 12345 -m 'confirm'")
+    run("python smswall-interactive -t 1000 -f 12345 -m 'confirm'")
     assert query("select * from list where shortcode='1600'") == 0
     assert query("select * from membership where list='1600'") == 0
     assert query("select * from owner where list='1600'") == 0
@@ -122,61 +122,61 @@ def testcase2():
 def testcase3():
     clear()
     start("Test 3: Create invalid list.")
-    run("python smswall.py -t 1000 -f 12345 -m 'create 16000'")
+    run("python smswall-interactive -t 1000 -f 12345 -m 'create 16000'")
     assert query("select * from list where shortcode='1600'") == 0
 
 def testcase4():
     clear()
     start("Test 4: Send 'help' to a non-list, non-app number.")
-    run("python smswall.py -t 1251 -f 12345 -m 'help'")
+    run("python smswall-interactive -t 1251 -f 12345 -m 'help'")
 
 def testcase5():
     clear()
     start("Test 5: Create list, cycle through each of public/private and open/closed. Test join while public/private.")
-    run("python smswall.py -t 1000 -f 12345 -m 'create 1600'")
+    run("python smswall-interactive -t 1000 -f 12345 -m 'create 1600'")
     assert query("select * from list where shortcode=1600 and is_public=1") == 1
 
-    run("python smswall.py -t 1600 -f 55555 -m 'join'")
+    run("python smswall-interactive -t 1600 -f 55555 -m 'join'")
     assert query("select * from membership where list='1600'") == 2
 
-    run("python smswall.py --debug -t 1600 -f 12345 -m 'makeprivate 1600'")
+    run("python smswall-interactive --debug -t 1600 -f 12345 -m 'makeprivate 1600'")
     assert query("select * from list where shortcode=1600 and is_public=1") == 1
     assert log_has_string("Invalid command")
 
-    run("python smswall.py -t 1600 -f 12345 -m 'makeprivate'")
+    run("python smswall-interactive -t 1600 -f 12345 -m 'makeprivate'")
     assert query("select * from list where shortcode=1600 and is_public=0") == 1
 
-    run("python smswall.py -t 1600 -f 43210 -m 'join'")
+    run("python smswall-interactive -t 1600 -f 43210 -m 'join'")
     assert query("select * from membership where list='1600'") == 2
 
-    run("python smswall.py -t 1600 -f 12345 -m 'makeclosed'")
+    run("python smswall-interactive -t 1600 -f 12345 -m 'makeclosed'")
     assert query("select * from list where shortcode=1600 and owner_only=1") == 1
 
-    run("python smswall.py --debug -t 1600 -f 55555 -m 'testmessage'")
+    run("python smswall-interactive --debug -t 1600 -f 55555 -m 'testmessage'")
     assert log_has_string("[0, 1000, '55555', None, 'Sorry, only list owners may post to this list.']")
 
-    run("python smswall.py -t 1600 -f 12345 -m 'addowner 55555'")
+    run("python smswall-interactive -t 1600 -f 12345 -m 'addowner 55555'")
     assert query("select * from owner where list=1600") == 2
 
-    run("python smswall.py --debug -t 1600 -f 55555 -m 'testmessage'")
+    run("python smswall-interactive --debug -t 1600 -f 55555 -m 'testmessage'")
     assert log_has_string("[0, '1600', '12345', '', '(from: 55555) testmessage']")
     assert not log_has_string("[1, '1600', '55555', '', '(from: 55555) testmessage']")
 
-    run("python smswall.py -t 1600 -f 12345 -m 'makeopen'")
+    run("python smswall-interactive -t 1600 -f 12345 -m 'makeopen'")
     assert query("select * from list where shortcode=1600 and owner_only=0") == 1
 
 def testcase6():
     clear()
     start("Test 6: Test clearing pending actions (create list, then delete, then clear confirm).")
-    run("python smswall.py -t 1000 -f 12345 -m 'create 1600'")
+    run("python smswall-interactive -t 1000 -f 12345 -m 'create 1600'")
     assert query("select * from list where shortcode='1600'") == 1
     assert query("select * from membership where list='1600'") == 1
     assert query("select * from confirm where sender=12345") == 0
-    run("python smswall.py -t 1000 -f 12345 -m 'delete 1600'")
+    run("python smswall-interactive -t 1000 -f 12345 -m 'delete 1600'")
     assert query("select * from list where shortcode='1600'") == 1
     assert query("select * from membership where list='1600'") == 1
     assert query("select * from confirm where sender=12345") == 1
-    run("python smswall.py --clean-confirm 0")
+    run("python smswall-interactive --clean-confirm 0")
     assert query("select * from list where shortcode='1600'") == 1
     assert query("select * from membership where list='1600'") == 1
     assert query("select * from confirm where sender=12345") == 0
@@ -184,74 +184,74 @@ def testcase6():
 def testcase7():
     clear()
     start("Test 7: Test removing a user from a list.")
-    run("python smswall.py -t 1000 -f 12345 -m 'create 1600'")
-    run("python smswall.py -t 1600 -f 55555 -m 'join'")
+    run("python smswall-interactive -t 1000 -f 12345 -m 'create 1600'")
+    run("python smswall-interactive -t 1600 -f 55555 -m 'join'")
     assert query("select * from membership where list='1600'") == 2
-    run("python smswall.py -t 1600 -f 55555 -m 'remove 55555'")
+    run("python smswall-interactive -t 1600 -f 55555 -m 'remove 55555'")
     assert query("select * from membership where list='1600'") == 2
-    run("python smswall.py -t 1600 -f 12345 -m 'remove 55555'")
+    run("python smswall-interactive -t 1600 -f 12345 -m 'remove 55555'")
     assert query("select * from membership where list='1600'") == 1
 
 def testcase8():
     clear()
     start("Test 8: Test making a user an owner then removing them.")
     # make the list
-    run("python smswall.py -t 1000 -f 12345 -m 'create 1600'")
+    run("python smswall-interactive -t 1000 -f 12345 -m 'create 1600'")
     assert query("select * from membership where list='1600'") == 1
     assert query("select * from owner where list='1600'") == 1
     # add an owner
-    run("python smswall.py -t 1600 -f 12345 -m 'addowner 55555'")
+    run("python smswall-interactive -t 1600 -f 12345 -m 'addowner 55555'")
     assert query("select * from membership where list='1600'") == 2
     assert query("select * from owner where list='1600'") == 2
     # make sure the new owner can do owner-y things
-    run("python smswall.py -t 1600 -f 55555 -m 'makeclosed'")
+    run("python smswall-interactive -t 1600 -f 55555 -m 'makeclosed'")
     assert query("select * from list where shortcode=1600 and owner_only=1") == 1
     # revoke their ownership
-    run("python smswall.py -t 1600 -f 12345 -m 'removeowner 55555'")
+    run("python smswall-interactive -t 1600 -f 12345 -m 'removeowner 55555'")
     assert query("select * from membership where list='1600'") == 2
     assert query("select * from owner where list='1600'") == 1
     # ensure the old owner can't do owner-y things
-    run("python smswall.py -t 1600 -f 55555 -m 'makeopen'")
+    run("python smswall-interactive -t 1600 -f 55555 -m 'makeopen'")
     assert query("select * from list where shortcode=1600 and owner_only=1") == 1
 
 def testcase9():
     clear()
     start("Test 9: Make a user join then leave a list.")
     # make the list
-    run("python smswall.py -t 1000 -f 12345 -m 'create 1600'")
+    run("python smswall-interactive -t 1000 -f 12345 -m 'create 1600'")
     assert query("select * from membership where list='1600'") == 1
     assert query("select * from owner where list='1600'") == 1
 
-    run("python smswall.py -t 1600 -f 55555 -m 'join'")
+    run("python smswall-interactive -t 1600 -f 55555 -m 'join'")
     assert query("select * from membership where list='1600'") == 2
 
-    run("python smswall.py -t 1600 -f 55555 -m 'leave'")
+    run("python smswall-interactive -t 1600 -f 55555 -m 'leave'")
     assert query("select * from membership where list='1600'") == 1
 
 def testcase10():
     clear()
     start("Test 10: Test handling uppercase commands")
-    run("python smswall.py -t 1000 -f 12345 -m 'CREATE 1500'")
-    run("python smswall.py -t 1500 -f 12345 -m 'Add 43210'")
-    run("python smswall.py -t 1500 -f 12345 -m 'Test Message'")
+    run("python smswall-interactive -t 1000 -f 12345 -m 'CREATE 1500'")
+    run("python smswall-interactive -t 1500 -f 12345 -m 'Add 43210'")
+    run("python smswall-interactive -t 1500 -f 12345 -m 'Test Message'")
     assert query("select * from list where shortcode='1500'") == 1
     assert query("select * from membership where list='1500'") == 2
 
 def testcase11():
     clear()
     start("Test 11: Test sending to a non-existent list that user is not a member of.")
-    run("python smswall.py -t 1500 -f 12345 -m 'Test Message'") # just shouldn't fail
+    run("python smswall-interactive -t 1500 -f 12345 -m 'Test Message'") # just shouldn't fail
 
 def testcase12():
     clear()
     start("Test 12: Test setting and changing username.")
-    run("python smswall.py --debug --from 11111 --to 1000 --message 'create 2000'")
+    run("python smswall-interactive --debug --from 11111 --to 1000 --message 'create 2000'")
     assert log_has_string("Your name has been set to '11111'")
-    run("python smswall.py --debug --from 12345 --to 2000 --message 'join'")
+    run("python smswall-interactive --debug --from 12345 --to 2000 --message 'join'")
     assert log_has_string("Your name has been set to '12345'")
-    run("python smswall.py --debug --from 12345 --to 1000 --message 'setname foo'")
+    run("python smswall-interactive --debug --from 12345 --to 1000 --message 'setname foo'")
     assert log_has_string("Your name has been set to 'foo'")
-    run("python smswall.py --debug --from 12345 --to 2000 --message 'test message'")
+    run("python smswall-interactive --debug --from 12345 --to 2000 --message 'test message'")
     assert log_has_string("(from: foo)")
 
 """
@@ -261,7 +261,7 @@ def perf1_testcase():
     clear()
     num = 100
     start("Perf test 1: Create %d lists." % num)
-    t = timeit.Timer('run("python smswall.py -t 1000 -f 1234 -m \'create %d\'" % (counter()+3000))', "from __main__ import run, counter")
+    t = timeit.Timer('run("python smswall-interactive -t 1000 -f 1234 -m \'create %d\'" % (counter()+3000))', "from __main__ import run, counter")
     r = t.timeit(num) / num
     print "List creation: %s sec per list" % (r)
     assert r < 1 # TODO: pitiful time, need to improve
@@ -270,8 +270,8 @@ def perf2_testcase():
     clear()
     num = 1000
     start("Perf test 2: Create 1 list, handle %d joins." % num)
-    run("python smswall.py -t 1000 -f 1234 -m 'create 1500'")
-    t = timeit.Timer('run("python smswall.py -t 1500 -f %d -m \'join\'" % (counter()+10000))', "from __main__ import run, counter")
+    run("python smswall-interactive -t 1000 -f 1234 -m 'create 1500'")
+    t = timeit.Timer('run("python smswall-interactive -t 1500 -f %d -m \'join\'" % (counter()+10000))', "from __main__ import run, counter")
     r = t.timeit(num) / num
     print "Join: %s sec per list join" % (r)
 
@@ -279,11 +279,11 @@ def perf3_testcase():
     clear()
     num = 100
     start("Perf test 3: Create 1 list, %d users. Handle %d posts." % (num, num))
-    run("python smswall.py -t 1000 -f 1234 -m 'create 1500'")
-    t = timeit.Timer('run("python smswall.py -t 1500 -f %d -m \'join\'" % (counter()+10000))', "from __main__ import run, counter")
+    run("python smswall-interactive -t 1000 -f 1234 -m 'create 1500'")
+    t = timeit.Timer('run("python smswall-interactive -t 1500 -f %d -m \'join\'" % (counter()+10000))', "from __main__ import run, counter")
     r = t.timeit(num) / num
     print "Join: %s sec per list join" % (r)
-    t = timeit.Timer('run("python smswall.py -t 1500 -f 1234 -m testmessage")', "from __main__ import run")
+    t = timeit.Timer('run("python smswall-interactive -t 1500 -f 1234 -m testmessage")', "from __main__ import run")
     r = t.timeit(num) / num
     print "Post: %s sec per post (sent to %d users, %.5f per user)" % (r, num, r/num)
 
@@ -291,11 +291,11 @@ def perf4_testcase():
     clear()
     num = 1000
     start("Perf test 3: Create 1 list, %d users. Handle %d posts." % (num, num))
-    run("python smswall.py -t 1000 -f 1234 -m 'create 1500'")
-    t = timeit.Timer('run("python smswall.py -t 1500 -f %d -m \'join\'" % (counter()+10000))', "from __main__ import run, counter")
+    run("python smswall-interactive -t 1000 -f 1234 -m 'create 1500'")
+    t = timeit.Timer('run("python smswall-interactive -t 1500 -f %d -m \'join\'" % (counter()+10000))', "from __main__ import run, counter")
     r = t.timeit(num) / num
     print "Join: %s sec per list join" % (r)
-    t = timeit.Timer('run("python smswall.py -t 1500 -f 1234 -m testmessage")', "from __main__ import run")
+    t = timeit.Timer('run("python smswall-interactive -t 1500 -f 1234 -m testmessage")', "from __main__ import run")
     r = t.timeit(100) / 100
     print "Post: %s sec per post (sent to %d users, %.6f per user)" % (r, num, r/num)
 
@@ -304,10 +304,10 @@ def perf5_testcase():
     num = 100
     start("Perf test 5: Create %d lists, 3 users on each, post to every list." % (num))
     for i in xrange(1, num+1):
-        run("python smswall.py -t 1000 -f 12345 -m 'create %d'" % (i+3000))
+        run("python smswall-interactive -t 1000 -f 12345 -m 'create %d'" % (i+3000))
         for j in xrange(0,2):
-            run("python smswall.py -t %d -f %d -m 'join'" % (i+3000, j + random.randint(100000,200000)))
-    t = timeit.Timer('run("python smswall.py -t %d -f 12345 -m testmessage" % (counter()+3000))', "from __main__ import run, counter")
+            run("python smswall-interactive -t %d -f %d -m 'join'" % (i+3000, j + random.randint(100000,200000)))
+    t = timeit.Timer('run("python smswall-interactive -t %d -f 12345 -m testmessage" % (counter()+3000))', "from __main__ import run, counter")
     r = t.timeit(num) / num
     print "Post: %s sec per post (sent to 3 users, %.5f per user)" % (r, r/3)
 
@@ -316,10 +316,10 @@ def perf6_testcase():
     num = 1000
     start("Perf test 6: Create %d lists, 3 users on each, post to every list." % (num))
     for i in xrange(1, num+1):
-        run("python smswall.py -t 1000 -f 12345 -m 'create %d'" % (i+3000))
+        run("python smswall-interactive -t 1000 -f 12345 -m 'create %d'" % (i+3000))
         for j in xrange(0,2):
-            run("python smswall.py -t %d -f %d -m 'join'" % (i+3000, j + random.randint(100000,200000)))
-    t = timeit.Timer('run("python smswall.py -t %d -f 12345 -m testmessage" % (counter()+3000))', "from __main__ import run, counter")
+            run("python smswall-interactive -t %d -f %d -m 'join'" % (i+3000, j + random.randint(100000,200000)))
+    t = timeit.Timer('run("python smswall-interactive -t %d -f 12345 -m testmessage" % (counter()+3000))', "from __main__ import run, counter")
     r = t.timeit(num) / num
     print "Post: %s sec per post (sent to 3 users, %.5f per user)" % (r, r/3)
 
@@ -330,14 +330,14 @@ def stress1_testcase():
     clear()
     num = 100000
     start("Stress test 1: Create 1 list, %d users. Handle %d posts." % (num, num))
-    run("python smswall.py -t 1000 -f 1234 -m 'create 1500'")
+    run("python smswall-interactive -t 1000 -f 1234 -m 'create 1500'")
     print "Adding users... "
     db = sqlite3.connect(db_file)
     for i in xrange(100000, 200000):
         db.execute("insert into membership(list, member) values (?,?)", (1500, i))
     db.commit()
     print "Users added."
-    t = timeit.Timer('run("python smswall.py -t 1500 -f 1234 -m testmessage")', "from __main__ import run")
+    t = timeit.Timer('run("python smswall-interactive -t 1500 -f 1234 -m testmessage")', "from __main__ import run")
     r = t.timeit(100) / 100
     print "Post: %s sec per post (sent to %d users, %.6f per user)" % (r, num, r/num)
 
@@ -347,7 +347,7 @@ def stress2_testcase():
     num_users = 500
     start("Stress test 2: Create %d lists, %d users on each, post to every list, in parallel." % (num, num_users))
     print "Setting up... (this may take a few minutes, adding >%d records to the DB!)" % (num*num_users)
-    run("python smswall.py -t 1000 -f 1234 -m 'create 9998'") # just to initialize things, we never use this
+    run("python smswall-interactive -t 1000 -f 1234 -m 'create 9998'") # just to initialize things, we never use this
     db = sqlite3.connect(db_file)
     for i in xrange(1, num+1):
         if i % 1000 == 0:
@@ -359,7 +359,7 @@ def stress2_testcase():
             db.execute("insert into membership(list, member) values(?, ?)", (i+2000, random.randint(100000,200000)))
     db.commit()
     print "Setup done."
-    t = timeit.Timer('run("python smswall.py -t %d -f 12345 -m testmessage &" % (counter()+2000))', "from __main__ import run, counter")
+    t = timeit.Timer('run("python smswall-interactive -t %d -f 12345 -m testmessage &" % (counter()+2000))', "from __main__ import run, counter")
     r = t.timeit(num) / num
     print "Post: %s sec per post (sent to %d users, %.5f per user)" % (r, num_users, r/num_users)
 
