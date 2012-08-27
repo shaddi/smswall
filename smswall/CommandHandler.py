@@ -54,7 +54,7 @@ class CommandHandler(object):
 
         # Don't dispatch non-commands
         if not cmd in self.commands:
-            e = "The command '%s' doesn't exist. Try sending 'help' to %s." \
+            e = "The command '%s' doesn't exist. Try sending 'help' to %s, or call 411 for Information." \
                 % (cmd, self.conf.app_number)
             raise CommandError(e)
 
@@ -86,7 +86,8 @@ class CommandHandler(object):
         # could have been intended as a command, and then deliver an
         # appropriate error to the user if the command turns out to be
         # malformed.
-        return has_cmd_char or cmd in self.commands.keys()
+        is_to_app = str(message.recipient) == str(self.conf.app_number)
+        return is_to_app or has_cmd_char or cmd in self.commands.keys()
 
     def invalid_command(self, command):
         if not command:
