@@ -1,5 +1,5 @@
 # DB settings
-db_file:                '/usr/local/share/yate/smswall.sqlite3'
+db_file:                '/etc/OpenBTS/smswall.sqlite3'
 
 # DB schema
 t_list:                 'list'
