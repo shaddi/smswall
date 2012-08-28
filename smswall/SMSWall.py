@@ -127,7 +127,7 @@ class SMSWall:
         """ Post a message to a list. """
         list_ = List(message.recipient, self)
         if not list_.exists():
-            self.reply("The list %s doesn't exist." % message.recipient)
+            self.reply("The list %s doesn't exist. Try sending 'help' to 1000 for help." % message.recipient)
             return
         if list_.only_owners_can_post() and not list_.is_owner(message.sender):
             self.reply("Sorry, only list owners may post to this list.")
@@ -186,4 +186,4 @@ class SMSWall:
         try:
             self.cmd_handler.dispatch(message, cmd, args, confirmed)
         except CommandError as e:
-            self.reply(str(e)) # Send the failure message to the user.
+            self.reply(str(e).replace("\"", "")) # Send the failure message to the user.
