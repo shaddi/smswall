@@ -135,7 +135,7 @@ class CommandHandler(object):
         there's an argument, should show help for specified command.
         """
         help_strings = {
-                        "help": "For more info send 'help <command>' to %s. Available commands: %s" % (self.conf.app_number, ", ".join(self.commands.keys())),
+                        "help": "For more info send 'help <command>' to %s. Available commands: %s. More questions? Call 411." % (self.conf.app_number, ", ".join(self.commands.keys())),
                         "create": "Send 'create <number>' to %s to create a new list with specified number." % self.conf.app_number,
                         "delete": "Send 'delete <number>' to %s to delete a list with specified number. Must be an owner of a list to delete it." % self.conf.app_number,
                         "setname": "Send 'setname <name>' to %s to set your name (displayed when you send messages)." % self.conf.app_number,
