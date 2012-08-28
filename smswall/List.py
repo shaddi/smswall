@@ -81,7 +81,7 @@ class List:
         """ Add the specified user to the list """
         self.conf.log.info("Adding user '%s' to list '%s'" % (number, self.shortcode))
         if not self.exists():
-            self.app.reply("Sorry! The list '%s' doesn't exist!" % self.shortcode)
+            self.app.reply("Sorry! The list '%s' doesn't exist! Send 'help' to 1000 for help." % self.shortcode)
             return
         db = self.db
         item = (self.shortcode, number)
