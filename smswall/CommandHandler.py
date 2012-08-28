@@ -64,6 +64,9 @@ class CommandHandler(object):
         if cmd in CommandHandler.app_commands and not recp == app_number:
             e = "The command '%s' must be sent to %s." % (cmd, app_number)
             raise CommandError(e)
+        elif not cmd in CommandHandler.app_commands and recp == app_number:
+            e = "The command '%s' must be sent directly to a list." % (cmd, app_number)
+            raise CommandError(e)
 
         if not arguments:
             arguments = []
