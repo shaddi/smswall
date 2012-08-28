@@ -48,9 +48,9 @@ class SMSWall:
 			self.log.info("SMSWall received: " +  self.app.name + " id: " + self.app.id)
 
             # special case for ralf
-            if str(res['vbts_tp_dest_address']) == "7253":
-                self.app.Acknowledge()
-                return
+ 			if str(res['vbts_tp_dest_address']) == "7253":
+ 				self.app.Acknowledge()
+ 				return
 
 			self.app.handled = True
 			self.app.retval = "202"
