@@ -62,9 +62,13 @@ class SMSWall:
 
     def set_username(self, number, name):
         self.log.debug("Setting name %s: %s" % (number, name))
-        r = self.db.execute("SELECT * FROM %s WHERE number=?" % self.conf.t_name, (number,))
-        if len(r.fetchall()) == 0:
+        r = self.db.execute("SELECT name FROM %s WHERE number=?" % self.conf.t_name, (number,))
+        res = r.fetchall()
+        if len(res) == 0:
             self.db.execute("INSERT INTO %s(number, name) VALUES (?,?)" % self.conf.t_name, (number, name))
+        elif res[0][0] == name:
+            self.log.debug("Name is the same, skipping.")
+            return
         else:
             self.db.execute("UPDATE OR IGNORE %s SET name=? WHERE number=?" % self.conf.t_name, (name, number))
         self.db.commit()
