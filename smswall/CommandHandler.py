@@ -232,9 +232,9 @@ class CommandHandler(object):
         """
         This command is sent to the app. Used to set the username of a user.
         """
-        if not len(args) == 1:
+        if not len(args) >= 1:
             self.invalid_command("setname")
-        self.app.set_username(message.sender, args[0])
+        self.app.set_username(message.sender, " ".join(args))
 
     def add(self, message, cmd, args, confirmed):
         """
