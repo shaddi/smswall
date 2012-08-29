@@ -50,6 +50,7 @@ class List:
             self.conf.log.info("Creating list %s" % self.shortcode)
             items = (self.shortcode, owners_only, is_public)
             self.db.execute("INSERT INTO %s VALUES (?,?,?)" % self.conf.t_list, items)
+            self.app.reply("Your list '%s' has been created! Tell people to join it by sending 'join' to '%s'." % (self.shortcode, self.shortcode))
             self.make_owner(initial_owner)
 
     def delete(self, confirmed=False):
