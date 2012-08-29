@@ -24,6 +24,16 @@ class List:
             return True
         return False
 
+    def post_to_owners(self, body):
+        """
+        Send a message to all the list owners.
+        """
+        r = self.db.execute("SELECT owner FROM %s WHERE list=?" % self.conf.t_owner, (self.shortcode,))
+        owners = [str(o[0]) for o in r.fetchall()]
+        for o in owners:
+            msg = Message(self.conf.app_number, o, None, body)
+            self.app.send(msg)
+
     def only_owners_can_post(self):
         """ Returns true if the list only allows owners to post, and false
         otherwise. """
@@ -71,10 +81,10 @@ class List:
             db.execute("DELETE FROM %s WHERE list=?" % self.conf.t_owner, (sc,))
             db.commit()
 
+            self.app.reply("The list %s has been deleted." % self.shortcode)
             for m in members:
                 msg = Message(self.conf.app_number, str(m[0]), None, "The list %s has been deleted, and all members (including you!) have been removed." % self.shortcode)
                 self.app.send(msg)
-            self.app.reply("The list %s has been deleted." % self.shortcode)
         else:
             self.app.add_pending_action(self.app.msg)
 
@@ -119,6 +129,10 @@ class List:
         items = (1 if owners_only else 0, self.shortcode)
         db.execute("UPDATE OR IGNORE %s SET owner_only=? WHERE shortcode=?" % self.conf.t_list, items)
         db.commit()
+        if owners_only:
+            self.post_to_owners("List '%s' has been set to only allow owners to post." % self.shortcode)
+        else:
+            self.post_to_owners("List '%s' has been set to allow anyone to post." % self.shortcode)
 
     def set_list_public(self, is_public):
         self.conf.log.info("List '%s': Setting is_public to '%s'" % (self.shortcode, bool(is_public)))
@@ -129,6 +143,11 @@ class List:
         items = (1 if is_public else 0, self.shortcode)
         db.execute("UPDATE OR IGNORE %s SET is_public=? WHERE shortcode=?" % self.conf.t_list, items)
         db.commit()
+        if is_public:
+            self.post_to_owners("List '%s' has been set to allow anyone to join." % self.shortcode)
+        else:
+            self.post_to_owners("List '%s' has been set to only allow owners to add list members (no public joins)." % self.shortcode)
+
 
     def make_owner(self, number):
         self.add_user(number)
@@ -137,6 +156,8 @@ class List:
         t_owner = self.conf.t_owner
         db.execute("INSERT OR IGNORE INTO %s(list, owner) VALUES (?,?)" % t_owner, (self.shortcode, number))
         db.commit()
+        msg = Message(self.conf.app_number, number, None, "You've been made an owner of the list '%s'." % self.shortcode)
+        self.app.send(msg)
 
     def unmake_owner(self, number):
         self.conf.log.info("Removing user '%s' as owner of list '%s'" % (number, self.shortcode))
@@ -144,6 +165,8 @@ class List:
         t_owner = self.conf.t_owner
         db.execute("DELETE FROM %s WHERE list=? AND owner=?" % t_owner, (self.shortcode, number))
         db.commit()
+        msg = Message(self.conf.app_number, number, None, "You're no longer an owner of the list '%s'." % self.shortcode)
+        self.app.send(msg)
 
     def post(self, message):
         self.conf.log.info("Posting to list '%s' message: %s" % (self.shortcode, message))

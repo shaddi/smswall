@@ -166,6 +166,7 @@ class SMSWall:
         subj = message.subject
         body = message.body
 
+        self.log.debug("Sending: %s" % message)
         # TODO: do something sensible with return value
         self.msg_sender.send_sms(sender, recv, subj, body)
 
