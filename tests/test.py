@@ -16,7 +16,7 @@ the appropriate parameter in __main__.
 
 # globals
 count = 0
-db_file = "smswall.sqlite3"
+db_file = "/etc/OpenBTS/smswall.sqlite3"
 
 def query(sql):
     db = sqlite3.connect(db_file, isolation_level=None)

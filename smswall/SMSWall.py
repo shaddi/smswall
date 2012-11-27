@@ -52,7 +52,7 @@ class SMSWall:
     def is_valid_shortcode(self, number):
         try:
             sc = int(number)
-        except ValueError:
+        except ValueError as e:
             return False
 
         if sc >= self.conf.min_shortcode and sc <= self.conf.max_shortcode:
@@ -80,7 +80,7 @@ class SMSWall:
         r = self.db.execute("SELECT name FROM %s WHERE number=?" % self.conf.t_name, (number,))
         try:
             name = r.fetchone()[0]
-        except:
+        except Exception as e:
             name = number
         return name
 

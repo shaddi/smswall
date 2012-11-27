@@ -11,6 +11,7 @@ setup(name="smswall",
       scripts=['smswall-interactive',
                'scripts/make-universal-list.py',
                'scripts/smswall-clean-confirm'],
-      data_files=[('/etc/', ['conf/smswall.yaml'])
+      data_files=[('/etc/', ['conf/smswall.yaml']),
+                  ('/usr/local/freeswitch/scripts/', ['freeswitch/VBTS_SMSWall.py'])
                   ]
 )

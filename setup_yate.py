@@ -11,6 +11,7 @@ setup(name="smswall",
       scripts=['smswall-interactive',
                'scripts/make-universal-list.py',
                'scripts/smswall-clean-confirm'],
-      data_files=[('/etc/', ['conf/smswall.yaml'])
-                  ]
+      data_files=[('/etc/', ['conf/smswall.yaml']),
+                  ('/usr/local/share/yate/scripts/', ['yate/Yate_SMSWall.py']),
+                  ('/usr/local/share/yate/sounds/', ['sounds/info-recording.gsm'])]
 )
