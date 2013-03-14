@@ -10,7 +10,6 @@ directly into the smswall DB.
 This should be set up as a cron job to run every few minutes.
 """
 
-get_nums_query = "select exten from dialdata_table;"
 subscriber_dbfile = "/var/lib/asterisk/sqlite3dir/sqlite3.db"
 smswall_dbfile = "/etc/OpenBTS/smswall.sqlite3"
 everyone_list_shortcode = 9999
@@ -24,7 +23,7 @@ if not len(r.fetchall()) == 1:
     exit("The everyone list shortcode doesn't exist.")
 
 # get numbers from subscriber registry
-r = subscriber_db.execute("SELECT exten FROM dialdata_table")
+r = subscriber_db.execute("SELECT callerid FROM sip_buddies")
 numbers = [str(x[0]) for x in r.fetchall()]
 
 # insert the numbers into the smswall db

@@ -175,5 +175,5 @@ class List:
         members = [str(m[0]) for m in r.fetchall() if not str(m[0]) == str(message.sender)]
         name = self.app.get_username(str(message.sender))
         for m in members:
-            msg = Message(self.shortcode, m, message.subject, str("(from: %s) " % name) + message.body)
+            msg = Message(self.shortcode, m, message.subject, str("(dari: %s) " % name) + message.body)
             self.app.send(msg)
