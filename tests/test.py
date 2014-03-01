@@ -158,6 +158,9 @@ def testcase5():
     run("python smswall-interactive -t 1600 -f 12345 -m 'addowner 55555'")
     assert query("select * from owner where list=1600") == 2
 
+    run("python smswall-interactive -t 1600 -f 12345 -m '.addowner 77777'")
+    assert query("select * from owner where list=1600") == 3
+
     run("python smswall-interactive --debug -t 1600 -f 55555 -m 'testmessage'")
     assert log_has_string("[0, '1600', '12345', '', '(from: 55555) testmessage']")
     assert not log_has_string("[1, '1600', '55555', '', '(from: 55555) testmessage']")
