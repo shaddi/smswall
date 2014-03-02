@@ -179,10 +179,10 @@ class SMSWall:
             body = message.body
 
         if len(body.split()) > 1:
-            cmd, args = message.body.split(None, 1)
+            cmd, args = body.split(None, 1)
             args = args.split()
         elif len(body.split()) == 1:
-            cmd = message.body.split()[0]
+            cmd = body.split()[0]
             args = None
         else:
             cmd = None
