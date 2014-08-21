@@ -10,6 +10,7 @@ class Config:
         self._scrub(self.config_dict['t_membership'])
         self._scrub(self.config_dict['t_owner'])
         self._scrub(self.config_dict['t_confirm'])
+        self.db_file = self.config_dict['db_file']
 
         self.db_conn = sqlite3.connect(self.db_file)
         self.log.debug("Connected to DB: %s" % self.db_file)

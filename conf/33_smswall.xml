@@ -1,0 +1,6 @@
+<extension name="smswall">
+  <condition field="${vbts_tp_dest_address}" expression="^1000$">
+    <action application="python" data='VBTS_SMSWall ${vbts_tp_dest_address}|${vbts_callerid}|${vbts_text}'/>
+    <action application="system" data='curl --data "from_name=${from_user}&service_type=${service_type}&destination=${vbts_tp_dest_address}" http://127.0.0.1:8081/smscdr'/>
+  </condition>
+</extension>
